@@ -86,7 +86,10 @@ export const Pagination: FC<{
     pages.push(i);
   }
 
-  const getUrl = (p: number) => (p === 1 ? basePath : `${basePath}?page=${p}`);
+  const getUrl = (p: number) => {
+    if (p === 1) return basePath;
+    return `${basePath}/${p}`;
+  };
 
   return (
     <div class="flex items-center justify-center gap-1.5 mt-8">

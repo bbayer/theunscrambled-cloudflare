@@ -93,7 +93,107 @@ Sitemap: https://theunscrambled.com/sitemap.xml
   return c.text(content, 200, { "Content-Type": "text/plain" });
 });
 
-// Catch-all route handler for dynamic paths
+// Handler for slug pages with page number
+async function handleSlugPage(c: any, slug: string, pageNum: number) {
+  const db = new WordDB(c.env.DB);
+  const page = Math.max(1, pageNum);
+
+  // 1. Words by Length: e.g. 5-letter-words
+  const lengthMatch = slug.match(/^(\d+)-letter-words$/);
+  if (lengthMatch) {
+    const length = parseInt(lengthMatch[1], 10);
+    if (length < 2 || length > 30) return c.notFound();
+
+    const data = await db.getWordsByLength(length, page, 96);
+    return c.html(
+      <WordListView
+        title={`${length} Letter Words ${page > 1 ? `- Page ${page}` : ""} | The Unscrambled`}
+        headline={`${length}-Letter Words ${page > 1 ? `(Page ${page})` : ""}`}
+        description={`Browse our complete dictionary of ${length}-letter words, perfect for Scrabble, Words with Friends, and word puzzles.`}
+        canonicalUrl={`https://theunscrambled.com/${length}-letter-words${page > 1 ? `/${page}` : ""}`}
+        basePath={`/${length}-letter-words`}
+        data={data}
+      />
+    );
+  }
+
+  // 2. Words by Letter: e.g. j-words
+  const letterMatch = slug.match(/^([a-z])-words$/i);
+  if (letterMatch) {
+    const letterParam = letterMatch[1].toLowerCase();
+    const data = await db.getWordsStartingWith(letterParam, page, 96);
+    const upper = letterParam.toUpperCase();
+
+    return c.html(
+      <WordListView
+        title={`Words Starting with ${upper} ${page > 1 ? `- Page ${page}` : ""} | The Unscrambled`}
+        headline={`Words Starting with "${upper}" ${page > 1 ? `(Page ${page})` : ""}`}
+        description={`Complete list of words starting with the letter ${upper}, scored with official Scrabble point values.`}
+        canonicalUrl={`https://theunscrambled.com/${letterParam}-words${page > 1 ? `/${page}` : ""}`}
+        basePath={`/${letterParam}-words`}
+        data={data}
+      />
+    );
+  }
+
+  // 3. Words Starting With Prefix: words-starting-with-xyz
+  if (slug.startsWith("words-starting-with-")) {
+    const rawPrefix = slug.replace("words-starting-with-", "");
+    const clean = cleanRack(rawPrefix);
+    if (!clean) return c.redirect("/");
+    if (clean.length === 1) return c.redirect(`/${clean}-words`, 301);
+    if (rawPrefix !== clean) return c.redirect(`/words-starting-with-${clean}`, 301);
+
+    const data = await db.getWordsStartingWith(clean, page, 96);
+    const upper = clean.toUpperCase();
+    return c.html(
+      <WordListView
+        title={`Words Starting with "${upper}" ${page > 1 ? `- Page ${page}` : ""} | The Unscrambled`}
+        headline={`Words Starting with "${upper}" ${page > 1 ? `(Page ${page})` : ""}`}
+        description={`Find all valid words that begin with the prefix "${upper}", scored with Scrabble point values.`}
+        canonicalUrl={`https://theunscrambled.com/words-starting-with-${clean}${page > 1 ? `/${page}` : ""}`}
+        basePath={`/words-starting-with-${clean}`}
+        data={data}
+      />
+    );
+  }
+
+  // 4. Words Ending In Suffix: words-ending-in-xyz
+  if (slug.startsWith("words-ending-in-")) {
+    const rawSuffix = slug.replace("words-ending-in-", "");
+    const clean = cleanRack(rawSuffix);
+    if (!clean) return c.redirect("/");
+    if (rawSuffix !== clean) return c.redirect(`/words-ending-in-${clean}`, 301);
+
+    const data = await db.getWordsEndingWith(clean, page, 96);
+    const upper = clean.toUpperCase();
+    return c.html(
+      <WordListView
+        title={`Words Ending in "${upper}" ${page > 1 ? `- Page ${page}` : ""} | The Unscrambled`}
+        headline={`Words Ending in "${upper}" ${page > 1 ? `(Page ${page})` : ""}`}
+        description={`Find all valid words ending with "${upper}", sorted alphabetically with Scrabble scores.`}
+        canonicalUrl={`https://theunscrambled.com/words-ending-in-${clean}${page > 1 ? `/${page}` : ""}`}
+        basePath={`/words-ending-in-${clean}`}
+        data={data}
+      />
+    );
+  }
+
+  return c.notFound();
+}
+
+// Route for paginated URLs: /5-letter-words/2 or /j-words/2
+app.get("/:slug/:page", async (c) => {
+  const slug = c.req.param("slug") || "";
+  const pageParam = c.req.param("page") || "";
+  const page = parseInt(pageParam, 10);
+  if (isNaN(page) || page < 1) return c.notFound();
+  if (page === 1) return c.redirect(`/${slug}`, 301);
+
+  return handleSlugPage(c, slug, page);
+});
+
+// Route for root slugs: /unscramble-word, /5-letter-words, /j-words, etc.
 app.get("/:slug", async (c) => {
   const slug = c.req.param("slug") || "";
 
@@ -121,99 +221,9 @@ app.get("/:slug", async (c) => {
     return c.html(<AnagramView word={clean} anagrams={anagrams} />);
   }
 
-  // 3. Words by Length: 5-letter-words
-  const lengthMatch = slug.match(/^(\d+)-letter-words$/);
-  if (lengthMatch) {
-    const length = parseInt(lengthMatch[1], 10);
-    if (length < 2 || length > 30) return c.notFound();
-
-    const page = Math.max(1, parseInt(c.req.query("page") || "1", 10));
-    const db = new WordDB(c.env.DB);
-    const data = await db.getWordsByLength(length, page, 96);
-
-    return c.html(
-      <WordListView
-        title={`${length} Letter Words - Complete List of Words with ${length} Letters | The Unscrambled`}
-        headline={`${length}-Letter Words`}
-        description={`Browse our complete dictionary of ${length}-letter words, perfect for Scrabble, Words with Friends, and word puzzles.`}
-        canonicalUrl={`https://theunscrambled.com/${length}-letter-words`}
-        basePath={`/${length}-letter-words`}
-        data={data}
-      />
-    );
-  }
-
-  // 4. Words by Letter: j-words
-  const letterMatch = slug.match(/^([a-z])-words$/i);
-  if (letterMatch) {
-    const letterParam = letterMatch[1].toLowerCase();
-    const page = Math.max(1, parseInt(c.req.query("page") || "1", 10));
-    const db = new WordDB(c.env.DB);
-    const data = await db.getWordsStartingWith(letterParam, page, 96);
-
-    const upper = letterParam.toUpperCase();
-    return c.html(
-      <WordListView
-        title={`Words Starting with ${upper} - ${upper} Words List | The Unscrambled`}
-        headline={`Words Starting with "${upper}"`}
-        description={`Complete list of words starting with the letter ${upper}, scored with official Scrabble point values.`}
-        canonicalUrl={`https://theunscrambled.com/${letterParam}-words`}
-        basePath={`/${letterParam}-words`}
-        data={data}
-      />
-    );
-  }
-
-  // 5. Words Starting With Prefix: words-starting-with-xyz
-  if (slug.startsWith("words-starting-with-")) {
-    const rawPrefix = slug.replace("words-starting-with-", "");
-    const clean = cleanRack(rawPrefix);
-    if (!clean) return c.redirect("/");
-    if (clean.length === 1) return c.redirect(`/${clean}-words`, 301);
-    if (rawPrefix !== clean) return c.redirect(`/words-starting-with-${clean}`, 301);
-
-    const page = Math.max(1, parseInt(c.req.query("page") || "1", 10));
-    const db = new WordDB(c.env.DB);
-    const data = await db.getWordsStartingWith(clean, page, 96);
-
-    const upper = clean.toUpperCase();
-    return c.html(
-      <WordListView
-        title={`Words Starting with "${upper}" - Prefix Word Finder | The Unscrambled`}
-        headline={`Words Starting with "${upper}"`}
-        description={`Find all valid words that begin with the prefix "${upper}", scored with Scrabble point values.`}
-        canonicalUrl={`https://theunscrambled.com/words-starting-with-${clean}`}
-        basePath={`/words-starting-with-${clean}`}
-        data={data}
-      />
-    );
-  }
-
-  // 6. Words Ending In Suffix: words-ending-in-xyz
-  if (slug.startsWith("words-ending-in-")) {
-    const rawSuffix = slug.replace("words-ending-in-", "");
-    const clean = cleanRack(rawSuffix);
-    if (!clean) return c.redirect("/");
-    if (rawSuffix !== clean) return c.redirect(`/words-ending-in-${clean}`, 301);
-
-    const page = Math.max(1, parseInt(c.req.query("page") || "1", 10));
-    const db = new WordDB(c.env.DB);
-    const data = await db.getWordsEndingWith(clean, page, 96);
-
-    const upper = clean.toUpperCase();
-    return c.html(
-      <WordListView
-        title={`Words Ending in "${upper}" - Suffix Word Finder | The Unscrambled`}
-        headline={`Words Ending in "${upper}"`}
-        description={`Find all valid words ending with "${upper}", sorted alphabetically with Scrabble scores.`}
-        canonicalUrl={`https://theunscrambled.com/words-ending-in-${clean}`}
-        basePath={`/words-ending-in-${clean}`}
-        data={data}
-      />
-    );
-  }
-
-  return c.notFound();
+  // Handle pagination via query param ?page=2 as well
+  const queryPage = parseInt(c.req.query("page") || "1", 10);
+  return handleSlugPage(c, slug, isNaN(queryPage) ? 1 : queryPage);
 });
 
 export default app;
