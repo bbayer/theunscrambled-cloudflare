@@ -99,6 +99,71 @@ export const UnscrambleView: FC<{
             })}
           </div>
         )}
+
+        {/* Detailed SEO Information & Letter Analysis Section */}
+        <section class="mt-16 pt-10 border-t border-slate-200/80 space-y-8">
+          <div class="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
+            <h2 class="text-xl sm:text-2xl font-bold text-slate-900">
+              Words That Can Be Made From "{upperRack}"
+            </h2>
+            <p class="text-sm sm:text-base text-slate-600 leading-relaxed">
+              Unscrambling the letters <strong>{upperRack.split("").join(" ")}</strong> produced <strong>{totalWords}</strong> valid words in our official English lexicon. Whether you are playing Scrabble, Words with Friends, Wordfeud, or solving newspaper word puzzles like the Daily Jumble, these results give you every possible combination sorted by length and point value.
+            </p>
+            {availableLengths.length > 0 && (
+              <p class="text-sm text-slate-600 leading-relaxed">
+                The longest words you can make with these letters are <strong>{availableLengths[0]}-letter words</strong>, which can yield up to <strong>{wordsByLength[availableLengths[0]][0]?.score || 0}</strong> Scrabble points before board bonuses.
+              </p>
+            )}
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+              <h3 class="text-base font-bold text-slate-900">
+                Word Breakdown for Letters {upperRack}
+              </h3>
+              <ul class="text-xs sm:text-sm text-slate-600 space-y-1.5 list-disc list-inside">
+                {availableLengths.map((len) => (
+                  <li>
+                    <strong>{wordsByLength[len].length}</strong> {len}-letter word{wordsByLength[len].length === 1 ? "" : "s"}
+                  </li>
+                ))}
+              </ul>
+              <div class="pt-2">
+                <a
+                  href={`/anagram-of-${rack}`}
+                  class="text-xs font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
+                >
+                  View only exact full-length anagrams of {upperRack} &rarr;
+                </a>
+              </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+              <h3 class="text-base font-bold text-slate-900">
+                Word Game Tips for {upperRack}
+              </h3>
+              <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                In Scrabble® and Words with Friends®, playing shorter 2-letter or 3-letter hook words parallel to an existing word can often score more than playing a single long word without bonus multipliers. Look through the {availableLengths[availableLengths.length - 1] || 2}-letter and 3-letter sections above for quick hooks!
+              </p>
+              {rack.length >= 2 && (
+                <div class="pt-2 flex flex-wrap gap-2 text-xs">
+                  <a
+                    href={`/words-starting-with-${rack.slice(0, 2)}`}
+                    class="px-2.5 py-1 rounded bg-slate-50 border border-slate-200 hover:border-emerald-500 font-medium text-slate-700"
+                  >
+                    Words starting with {rack.slice(0, 2).toUpperCase()}
+                  </a>
+                  <a
+                    href={`/words-ending-in-${rack.slice(-2)}`}
+                    class="px-2.5 py-1 rounded bg-slate-50 border border-slate-200 hover:border-emerald-500 font-medium text-slate-700"
+                  >
+                    Words ending with {rack.slice(-2).toUpperCase()}
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
       </div>
     </Layout>
   );

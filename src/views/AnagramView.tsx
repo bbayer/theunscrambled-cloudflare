@@ -73,6 +73,70 @@ export const AnagramView: FC<{
             </div>
           </div>
         )}
+
+        {/* Detailed SEO Information & Anagram Analysis */}
+        <section class="mt-16 pt-10 border-t border-slate-200/80 space-y-8">
+          <div class="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
+            <h2 class="text-xl sm:text-2xl font-bold text-slate-900">
+              About Anagrams of "{upperWord}"
+            </h2>
+            <p class="text-sm sm:text-base text-slate-600 leading-relaxed">
+              An anagram of <strong>{upperWord}</strong> is formed by taking its {word.length} letters ({upperWord.split("").join(", ")}) and rearranging them to make a new, distinct English word. All {word.length} letters must be used exactly once without omitting or adding any letters.
+            </p>
+            <p class="text-sm sm:text-base text-slate-600 leading-relaxed">
+              {anagrams.length > 0 ? (
+                <span>
+                  Our dictionary found <strong>{anagrams.length}</strong> exact {word.length}-letter anagram{anagrams.length === 1 ? "" : "s"} for <strong>{upperWord}</strong>. Each anagram is scored according to standard Scrabble® tile values.
+                </span>
+              ) : (
+                <span>
+                  There are no exact dictionary anagrams that use all {word.length} letters of <strong>{upperWord}</strong>. However, you can still form numerous smaller words using subsets of these letters!
+                </span>
+              )}
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+              <h3 class="text-base font-bold text-slate-900">
+                Letter & Word Characteristics
+              </h3>
+              <ul class="text-xs sm:text-sm text-slate-600 space-y-2">
+                <li>
+                  <strong class="text-slate-800">Word Length:</strong> {word.length} letters
+                </li>
+                <li>
+                  <strong class="text-slate-800">Starting Letter:</strong> {word[0].toUpperCase()} (<a href={`/${word[0].toLowerCase()}-words`} class="text-emerald-700 hover:underline">browse words starting with {word[0].toUpperCase()}</a>)
+                </li>
+                <li>
+                  <strong class="text-slate-800">Ending Letter:</strong> {word[word.length - 1].toUpperCase()}
+                </li>
+                {word.length >= 2 && (
+                  <li>
+                    <strong class="text-slate-800">Prefix / Suffix:</strong> Starts with <em>{word.slice(0, 2).toUpperCase()}</em>, ends with <em>{word.slice(-2).toUpperCase()}</em>
+                  </li>
+                )}
+              </ul>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+              <h3 class="text-base font-bold text-slate-900">
+                Need More Options?
+              </h3>
+              <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                If you are playing Scrabble, Words with Friends, or Wordfeud and cannot fit the full {word.length}-letter word on the board, try our full word unscrambler to view all smaller 2, 3, 4, and 5-letter combinations:
+              </p>
+              <div class="pt-1">
+                <a
+                  href={`/unscramble-${word}`}
+                  class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold hover:bg-emerald-100 transition"
+                >
+                  Unscramble all sub-words from {upperWord} &rarr;
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     </Layout>
   );
