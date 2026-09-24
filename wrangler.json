@@ -1,13 +1,13 @@
 {
   "compatibility_date": "2025-04-01",
-  "main": "src/index.ts",
+  "main": "src/index.tsx",
   "name": "theunscrambled-cloudflare",
   "upload_source_maps": true,
   "d1_databases": [
     {
       "binding": "DB",
-      "database_id": "a2cd8d84-3c39-452a-8622-a0a8eb0d03df",
-      "database_name": "d1-template"
+      "database_id": "a64c0250-9d56-45d2-91ad-393616c778df",
+      "database_name": "theunscrambled-db"
     }
   ],
   "observability": {
