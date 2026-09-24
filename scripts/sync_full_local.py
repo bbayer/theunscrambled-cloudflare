@@ -45,8 +45,25 @@ dst_c.executemany("INSERT OR IGNORE INTO anagrams (anagram, data) VALUES (?, ?)"
 dst_conn.commit()
 print("Anagrams copied successfully.")
 
+print("Copying synsets definitions...")
+src_c.execute("SELECT word, syn, type, definition FROM synsets")
+synsets = src_c.fetchall()
+print(f"Total synsets to copy: {len(synsets)}")
+
+dst_conn.execute("BEGIN TRANSACTION")
+syn_rows = []
+for word, syn, stype, defn in synsets:
+    if word and defn:
+        syn_rows.append((word.lower().strip(), syn, stype, defn))
+
+dst_c.executemany("INSERT INTO synsets (word, syn, type, definition) VALUES (?, ?, ?, ?)", syn_rows)
+dst_conn.commit()
+print("Synsets copied successfully.")
+
 # Verification
 dst_c.execute("SELECT count(*) FROM words")
 print("Total words in local D1:", dst_c.fetchone()[0])
 dst_c.execute("SELECT count(*) FROM anagrams")
 print("Total anagrams in local D1:", dst_c.fetchone()[0])
+dst_c.execute("SELECT count(*) FROM synsets")
+print("Total synsets in local D1:", dst_c.fetchone()[0])

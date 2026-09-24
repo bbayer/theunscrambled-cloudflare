@@ -69,5 +69,31 @@ def main():
     out_file.close()
     print(f"Anagrams export completed. Total files: {file_idx}")
 
+    # 3. Export synsets definitions
+    print("Extracting synsets definitions...")
+    c.execute("SELECT word, syn, type, definition FROM synsets")
+    synsets = c.fetchall()
+    print(f"Total synsets: {len(synsets)}")
+
+    file_idx = 1
+    out_file = open(os.path.join(OUTPUT_DIR, f"synsets_{file_idx:03d}.sql"), "w", encoding="utf-8")
+
+    for i, (word, syn, stype, defn) in enumerate(synsets):
+        if not word or not defn:
+            continue
+        w_esc = word.lower().strip().replace("'", "''")
+        s_esc = (syn or "").replace("'", "''")
+        t_esc = (stype or "").replace("'", "''")
+        d_esc = defn.replace("'", "''")
+        out_file.write(f"INSERT INTO synsets (word, syn, type, definition) VALUES ('{w_esc}', '{s_esc}', '{t_esc}', '{d_esc}');\n")
+
+        if (i + 1) % 25000 == 0:
+            out_file.close()
+            file_idx += 1
+            out_file = open(os.path.join(OUTPUT_DIR, f"synsets_{file_idx:03d}.sql"), "w", encoding="utf-8")
+
+    out_file.close()
+    print(f"Synsets export completed. Total files: {file_idx}")
+
 if __name__ == "__main__":
     main()

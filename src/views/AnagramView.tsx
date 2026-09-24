@@ -1,12 +1,13 @@
 import type { FC } from "hono/jsx";
 import { Layout } from "./Layout";
-import { SearchBar, WordCard } from "./components";
-import type { WordResult } from "../lib/db";
+import { SearchBar, WordCard, WordDefinitions } from "./components";
+import type { WordResult, WordDefinition } from "../lib/db";
 
-export const AnagramView: FC<{ word: string; anagrams: WordResult[] }> = ({
-  word,
-  anagrams,
-}) => {
+export const AnagramView: FC<{
+  word: string;
+  anagrams: WordResult[];
+  definitions?: WordDefinition[];
+}> = ({ word, anagrams, definitions = [] }) => {
   const upperWord = word.toUpperCase();
 
   return (
@@ -33,6 +34,13 @@ export const AnagramView: FC<{ word: string; anagrams: WordResult[] }> = ({
             <SearchBar defaultWord={word} actionType="anagram" />
           </div>
         </section>
+
+        {/* Word Definitions */}
+        {definitions.length > 0 && (
+          <div class="max-w-3xl mx-auto">
+            <WordDefinitions word={word} definitions={definitions} />
+          </div>
+        )}
 
         <div class="flex items-center justify-center gap-4 py-2">
           <a

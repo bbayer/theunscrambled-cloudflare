@@ -211,8 +211,11 @@ app.get("/:slug", async (c) => {
     if (rawWord !== clean) return c.redirect(`/unscramble-${clean}`, 301);
 
     const db = new WordDB(c.env.DB);
-    const data = await db.unscramble(clean);
-    return c.html(<UnscrambleView data={data} />);
+    const [data, definitions] = await Promise.all([
+      db.unscramble(clean),
+      db.getDefinitions(clean),
+    ]);
+    return c.html(<UnscrambleView data={data} definitions={definitions} />);
   }
 
   // 2. Anagram: anagram-of-word
@@ -223,8 +226,11 @@ app.get("/:slug", async (c) => {
     if (rawWord !== clean) return c.redirect(`/anagram-of-${clean}`, 301);
 
     const db = new WordDB(c.env.DB);
-    const anagrams = await db.getExactAnagrams(clean);
-    return c.html(<AnagramView word={clean} anagrams={anagrams} />);
+    const [anagrams, definitions] = await Promise.all([
+      db.getExactAnagrams(clean),
+      db.getDefinitions(clean),
+    ]);
+    return c.html(<AnagramView word={clean} anagrams={anagrams} definitions={definitions} />);
   }
 
   // Handle pagination via query param ?page=2 as well

@@ -1,9 +1,12 @@
 import type { FC } from "hono/jsx";
 import { Layout } from "./Layout";
-import { SearchBar, WordCard } from "./components";
-import type { UnscrambleResponse } from "../lib/db";
+import { SearchBar, WordCard, WordDefinitions } from "./components";
+import type { UnscrambleResponse, WordDefinition } from "../lib/db";
 
-export const UnscrambleView: FC<{ data: UnscrambleResponse }> = ({ data }) => {
+export const UnscrambleView: FC<{
+  data: UnscrambleResponse;
+  definitions?: WordDefinition[];
+}> = ({ data, definitions = [] }) => {
   const { rack, totalWords, wordsByLength, availableLengths } = data;
   const upperRack = rack.toUpperCase();
 
@@ -32,6 +35,13 @@ export const UnscrambleView: FC<{ data: UnscrambleResponse }> = ({ data }) => {
             <SearchBar defaultWord={rack} actionType="unscramble" />
           </div>
         </section>
+
+        {/* Word Definitions Section (if any found) */}
+        {definitions.length > 0 && (
+          <div class="max-w-4xl mx-auto">
+            <WordDefinitions word={rack} definitions={definitions} />
+          </div>
+        )}
 
         {/* Quick Jump Navigation for Lengths */}
         {availableLengths.length > 0 && (

@@ -238,4 +238,25 @@ export class WordDB {
       totalPages,
     };
   }
+
+  /**
+   * Word definitions from synsets
+   */
+  async getDefinitions(word: string): Promise<WordDefinition[]> {
+    const clean = cleanRack(word);
+    if (!clean) return [];
+
+    const { results } = await this.db
+      .prepare("SELECT syn, type, definition FROM synsets WHERE word = ? LIMIT 10")
+      .bind(clean)
+      .all<WordDefinition>();
+
+    return results || [];
+  }
+}
+
+export interface WordDefinition {
+  syn?: string;
+  type?: string;
+  definition: string;
 }

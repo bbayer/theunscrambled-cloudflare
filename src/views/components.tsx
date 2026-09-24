@@ -71,6 +71,52 @@ export const WordCard: FC<{ word: string; score: number; length?: number }> = ({
   );
 };
 
+export const WordDefinitions: FC<{
+  word: string;
+  definitions: { syn?: string; type?: string; definition: string }[];
+}> = ({ word, definitions }) => {
+  if (!definitions || definitions.length === 0) return null;
+
+  return (
+    <div class="bg-white rounded-2xl border border-slate-200/90 p-6 sm:p-8 space-y-4 shadow-xs">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+          <span>Definitions of</span>
+          <span class="text-emerald-700 uppercase font-extrabold">{word}</span>
+        </h2>
+        <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">
+          {definitions.length} {definitions.length === 1 ? "definition" : "definitions"}
+        </span>
+      </div>
+
+      <div class="space-y-3 pt-1">
+        {definitions.map((item, idx) => (
+          <div class="flex items-start gap-3 text-sm text-slate-700 leading-relaxed">
+            <span class="w-6 h-6 rounded-full bg-emerald-50 text-emerald-700 font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
+              {idx + 1}
+            </span>
+            <div class="space-y-1">
+              <p>
+                {item.type && (
+                  <span class="italic font-semibold text-slate-500 mr-2 text-xs uppercase tracking-wider">
+                    ({item.type})
+                  </span>
+                )}
+                {item.definition}
+              </p>
+              {item.syn && item.syn !== word && (
+                <p class="text-xs text-slate-500">
+                  Synonym: <span class="font-medium text-slate-700">{item.syn.replace(/_/g, " ")}</span>
+                </p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 export const Pagination: FC<{
   current: number;
   total: number;
