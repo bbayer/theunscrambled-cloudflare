@@ -31,6 +31,26 @@ export const Layout: FC<LayoutProps> = ({
         <meta property="twitter:title" content={title} />
         <meta property="twitter:description" content={description} />
 
+        {/* Google Analytics */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-W2L8DX0CTX"></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-W2L8DX0CTX');
+          `,
+          }}
+        />
+
+        {/* Google AdSense */}
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3302383181316413"
+          crossorigin="anonymous"
+        ></script>
+
         {/* Tailwind CDN */}
         <script src="https://cdn.tailwindcss.com"></script>
         <script

@@ -93,6 +93,12 @@ Sitemap: https://theunscrambled.com/sitemap.xml
   return c.text(content, 200, { "Content-Type": "text/plain" });
 });
 
+// Ads.txt for AdSense
+app.get("/ads.txt", (c) => {
+  const content = `google.com, pub-3302383181316413, DIRECT, f08c47fec0942fa0\n`;
+  return c.text(content, 200, { "Content-Type": "text/plain" });
+});
+
 // Handler for slug pages with page number
 async function handleSlugPage(c: any, slug: string, pageNum: number) {
   const db = new WordDB(c.env.DB);
