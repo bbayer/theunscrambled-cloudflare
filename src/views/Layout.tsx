@@ -22,14 +22,39 @@ export const Layout: FC<LayoutProps> = ({
         <meta name="description" content={description} />
         <link rel="canonical" href={canonicalUrl} />
 
+        <meta name="robots" content="index, follow" />
+        <meta name="theme-color" content="#16a34a" />
+
+        {/* Favicon SVG Data URI */}
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%2316a34a'/><text x='50' y='70' font-size='60' font-family='sans-serif' font-weight='900' fill='white' text-anchor='middle'>U</text></svg>" type="image/svg+xml" />
+
         {/* Open Graph / Social */}
         <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="The Unscrambled" />
         <meta property="og:url" content={canonicalUrl} />
         <meta property="og:title" content={title} />
         <meta property="og:description" content={description} />
-        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:card" content="summary" />
         <meta property="twitter:title" content={title} />
         <meta property="twitter:description" content={description} />
+
+        {/* Schema.org WebSite JSON-LD */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              "name": "The Unscrambled",
+              "url": "https://theunscrambled.com",
+              "potentialAction": {
+                "@type": "SearchAction",
+                "target": "https://theunscrambled.com/unscramble-{search_term_string}",
+                "query-input": "required name=search_term_string"
+              }
+            })
+          }}
+        />
 
         {/* Google Analytics */}
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-W2L8DX0CTX"></script>
@@ -167,7 +192,7 @@ export const Layout: FC<LayoutProps> = ({
             </div>
           </div>
 
-          <div class="max-w-6xl mx-auto px-4 mt-8 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400">
+          <div class="max-w-6xl mx-auto px-4 mt-8 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
             <p>&copy; {new Date().getFullYear()} The Unscrambled. All rights reserved.</p>
             <p>Powered by Cloudflare Workers & D1.</p>
           </div>

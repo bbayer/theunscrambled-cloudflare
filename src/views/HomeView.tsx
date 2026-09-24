@@ -55,7 +55,7 @@ export const HomeView: FC = () => {
             <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-lg">
               🔠
             </div>
-            <h3 class="text-lg font-bold text-slate-900">Words by Length</h3>
+            <h2 class="text-lg font-bold text-slate-900">Words by Length</h2>
             <p class="text-sm text-slate-600 leading-relaxed">
               Explore exhaustive dictionaries organized by exact word lengths from 2-letter combos to 15-letter master words.
             </p>
@@ -75,7 +75,7 @@ export const HomeView: FC = () => {
             <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-lg">
               🔤
             </div>
-            <h3 class="text-lg font-bold text-slate-900">Browse by Starting Letter</h3>
+            <h2 class="text-lg font-bold text-slate-900">Browse by Starting Letter</h2>
             <p class="text-sm text-slate-600 leading-relaxed">
               Target high-value letters like Q, X, Z, and J or browse standard vocabulary from A to Z with full pagination.
             </p>
@@ -95,7 +95,7 @@ export const HomeView: FC = () => {
             <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-lg">
               🧩
             </div>
-            <h3 class="text-lg font-bold text-slate-900">Prefix & Suffix Solvers</h3>
+            <h2 class="text-lg font-bold text-slate-900">Prefix & Suffix Solvers</h2>
             <p class="text-sm text-slate-600 leading-relaxed">
               Looking for words starting with a prefix or ending in common suffixes? Perfect for crossword clues and board games.
             </p>
