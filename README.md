@@ -1,59 +1,105 @@
-# Worker + D1 Database
+# The Unscrambled
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/templates/tree/main/d1-template)
+Ultra-fast word unscrambler, anagram solver, and Scrabble / Words with Friends word finder built with **Hono**, **TypeScript**, and **D1 SQLite Database**.
 
-![Worker + D1 Template Preview](https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/cb7cb0a9-6102-4822-633c-b76b7bb25900/public)
+---
 
-<!-- dash-content-start -->
+## Features
 
-D1 is Cloudflare's native serverless SQL database ([docs](https://developers.cloudflare.com/d1/)). This project demonstrates using a Worker with a D1 binding to execute a SQL statement. A simple frontend displays the result of this query:
+- **Word Unscrambler (`/unscramble-:word`)**: Finds all valid sub-words and anagrams for any letter rack (up to 12+ letters), sorted by length and Scrabble tile points.
+- **Exact Anagram Solver (`/anagram-of-:word`)**: Instant lookup of exact anagrams using sorted-letter indexes.
+- **Word Length Dictionaries (`/:length-letter-words`)**: Paginated dictionaries from 2-letter combos to 15-letter master words.
+- **Starting Letter Hubs (`/:letter-words`)**: Standard A-Z hubs and high-value letter pages (Q, Z, X, J).
+- **Prefix & Suffix Solvers (`/words-starting-with-:prefix`, `/words-ending-in-:suffix`)**: Perfect for crossword solving and board game hooks.
+- **Lexical Definitions**: Synsets, phonetic/word types, and definitions from WordNet.
+- **High-Performance & Low D1 Row Reads**:
+  - Precomputed word counts (`word_counts` table + in-memory maps) to eliminate expensive `SELECT COUNT(*)` full-table scans.
+  - B-tree range queries (`word >= ? AND word < ?`) for fast, indexed prefix pagination.
+  - Batched anagram queries to minimize roundtrips.
+- **SEO & Search Engines**:
+  - Dynamic XML Sitemap (`/sitemap.xml`).
+  - Google Analytics (`G-W2L8DX0CTX`) and Google AdSense (`ca-pub-3302383181316413`) integrated with `/ads.txt`.
+  - Schema.org structured data (`WebSite` search action and `FAQPage` microdata).
 
-```SQL
-SELECT * FROM comments LIMIT 3;
+---
+
+## Tech Stack
+
+- **Framework**: [Hono](https://hono.dev/) (JSX SSR)
+- **Database**: D1 (Serverless SQLite)
+- **Styling**: Tailwind CSS
+- **Runtime**: Workers (TypeScript)
+
+---
+
+## Project Structure
+
+```text
+├── migrations/             # SQL schema migrations
+│   ├── 0001_init.sql       # Anagrams & words tables with indexes
+│   ├── 0002_synsets.sql    # Synsets & definitions table
+│   └── 0003_word_counts.sql# Precomputed word counts for zero-read counting
+├── scripts/                # Database population and sync utilities
+│   ├── generate_word_counts_migration.py
+│   └── sync_full_local.py
+├── src/
+│   ├── index.tsx           # Hono router and URL handlers
+│   ├── lib/
+│   │   ├── db.ts           # D1 database queries & unscramble algorithm
+│   │   ├── wordCounts.ts   # In-memory precomputed counts & range helpers
+│   │   └── wordMath.ts     # Permutations, combinations, Scrabble scoring
+│   └── views/              # Server-rendered JSX components
+│       ├── AnagramView.tsx
+│       ├── HomeView.tsx
+│       ├── Layout.tsx
+│       ├── UnscrambleView.tsx
+│       ├── WordListView.tsx
+│       └── components.tsx
+├── wrangler.json           # Wrangler configuration and D1 database binding
+└── package.json
 ```
 
-The D1 database is initialized with a `comments` table and this data:
-
-```SQL
-INSERT INTO comments (author, content)
-VALUES
-    ('Kristian', 'Congrats!'),
-    ('Serena', 'Great job!'),
-    ('Max', 'Keep up the good work!')
-;
-```
-
-> [!IMPORTANT]
-> When using C3 to create this project, select "no" when it asks if you want to deploy. You need to follow this project's [setup steps](https://github.com/cloudflare/templates/tree/main/d1-template#setup-steps) before deploying.
-
-<!-- dash-content-end -->
+---
 
 ## Getting Started
 
-Outside of this repo, you can start a new project with this template using [C3](https://developers.cloudflare.com/pages/get-started/c3/) (the `create-cloudflare` CLI):
-
+### 1. Install Dependencies
+```bash
+npm install
 ```
-npm create cloudflare@latest -- --template=cloudflare/templates/d1-template
+
+### 2. Run Local Development Server
+```bash
+npm run dev
+```
+The server will start at `http://127.0.0.1:8787`.
+
+### 3. Verify TypeScript & Bundle
+```bash
+npm run check
 ```
 
-A live public deployment of this template is available at [https://d1-template.templates.workers.dev](https://d1-template.templates.workers.dev)
+---
 
-## Setup Steps
+## Database Migrations
 
-1. Install the project dependencies with a package manager of your choice:
-   ```bash
-   npm install
-   ```
-2. Create a [D1 database](https://developers.cloudflare.com/d1/get-started/) with the name "d1-template-database":
-   ```bash
-   npx wrangler d1 create d1-template-database
-   ```
-   ...and update the `database_id` field in `wrangler.json` with the new database ID.
-3. Run the following db migration to initialize the database (notice the `migrations` directory in this project):
-   ```bash
-   npx wrangler d1 migrations apply --remote d1-template-database
-   ```
-4. Deploy the project!
-   ```bash
-   npx wrangler deploy
-   ```
+### Local Database
+```bash
+# Apply pending migrations to local SQLite D1
+npx wrangler d1 migrations apply theunscrambled-db --local
+```
+
+### Remote Production Database
+```bash
+# Apply migrations to remote D1
+npx wrangler d1 migrations apply theunscrambled-db --remote
+```
+
+---
+
+## Deployment
+
+Deploy the project to production:
+```bash
+npm run deploy
+```
