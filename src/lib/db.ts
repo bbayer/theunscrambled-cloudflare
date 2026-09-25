@@ -1,4 +1,11 @@
 import { cleanRack, sortWord, getRackCombinations, calcScrabbleScore } from "./wordMath";
+import {
+  STATIC_LENGTH_COUNTS,
+  STATIC_LETTER_COUNTS,
+  STATIC_PREFIX_COUNTS,
+  STATIC_SUFFIX_COUNTS,
+  getNextPrefix,
+} from "./wordCounts";
 
 export interface WordResult {
   word: string;
@@ -75,8 +82,8 @@ export class WordDB {
       };
     }
 
-    // D1 / SQLite parameter batching (e.g. 50 per batch)
-    const batchSize = 50;
+    // D1 / SQLite parameter batching (90 per batch to minimize SQL queries)
+    const batchSize = 90;
     const allWordsSet = new Set<string>();
 
     for (let i = 0; i < combs.length; i += batchSize) {
@@ -135,6 +142,7 @@ export class WordDB {
 
   /**
    * Words by length with pagination
+   * Optimized: Uses STATIC_LENGTH_COUNTS to eliminate SELECT COUNT(*) full-table scan.
    */
   async getWordsByLength(
     length: number,
@@ -143,12 +151,16 @@ export class WordDB {
   ): Promise<PaginatedWords> {
     const offset = Math.max(0, (page - 1) * pageSize);
 
-    const countRow = await this.db
-      .prepare("SELECT COUNT(*) as cnt FROM words WHERE length = ?")
-      .bind(length)
-      .first<{ cnt: number }>();
+    // 1. Get count from static in-memory map or precomputed word_counts table (0 to 1 row read)
+    let total = STATIC_LENGTH_COUNTS[length];
+    if (total === undefined) {
+      const countRow = await this.db
+        .prepare("SELECT count FROM word_counts WHERE key = ?")
+        .bind(`len:${length}`)
+        .first<{ count: number }>();
+      total = countRow ? countRow.count : 0;
+    }
 
-    const total = countRow ? countRow.cnt : 0;
     const totalPages = Math.ceil(total / pageSize);
 
     const { results } = await this.db
@@ -169,6 +181,9 @@ export class WordDB {
 
   /**
    * Words starting with a specific prefix
+   * Optimized:
+   * 1. Count uses in-memory map -> word_counts table -> range COUNT (never full LIKE scan).
+   * 2. Select uses B-tree range scan: `word >= :clean AND word < :nextPrefix`.
    */
   async getWordsStartingWith(
     prefix: string,
@@ -177,21 +192,45 @@ export class WordDB {
   ): Promise<PaginatedWords> {
     const clean = cleanRack(prefix);
     const offset = Math.max(0, (page - 1) * pageSize);
-    const likePattern = `${clean}%`;
+    const nextPrefix = getNextPrefix(clean);
 
-    const countRow = await this.db
-      .prepare("SELECT COUNT(*) as cnt FROM words WHERE word LIKE ?")
-      .bind(likePattern)
-      .first<{ cnt: number }>();
+    // 1. Resolve count with 0 row reads if in static dictionary
+    let total: number | undefined;
+    if (clean.length === 1 && STATIC_LETTER_COUNTS[clean] !== undefined) {
+      total = STATIC_LETTER_COUNTS[clean];
+    } else if (STATIC_PREFIX_COUNTS[clean] !== undefined) {
+      total = STATIC_PREFIX_COUNTS[clean];
+    }
 
-    const total = countRow ? countRow.cnt : 0;
+    // 2. Fallback to word_counts table (1 row read)
+    if (total === undefined) {
+      const countRow = await this.db
+        .prepare("SELECT count FROM word_counts WHERE key = ?")
+        .bind(`pref:${clean}`)
+        .first<{ count: number }>();
+
+      if (countRow) {
+        total = countRow.count;
+      }
+    }
+
+    // 3. Fallback to indexed B-tree range count if not found in precomputed table
+    if (total === undefined) {
+      const rangeCountRow = await this.db
+        .prepare("SELECT COUNT(*) as cnt FROM words WHERE word >= ? AND word < ?")
+        .bind(clean, nextPrefix)
+        .first<{ cnt: number }>();
+      total = rangeCountRow ? rangeCountRow.cnt : 0;
+    }
+
     const totalPages = Math.ceil(total / pageSize);
 
+    // 4. Fetch page slice using covering B-tree index (word >= ? AND word < ?)
     const { results } = await this.db
       .prepare(
-        "SELECT word FROM words WHERE word LIKE ? ORDER BY word ASC LIMIT ? OFFSET ?"
+        "SELECT word FROM words WHERE word >= ? AND word < ? ORDER BY word ASC LIMIT ? OFFSET ?"
       )
-      .bind(likePattern, pageSize, offset)
+      .bind(clean, nextPrefix, pageSize, offset)
       .all<{ word: string }>();
 
     return {
@@ -205,6 +244,7 @@ export class WordDB {
 
   /**
    * Words ending in a specific suffix
+   * Optimized: Count uses static map -> word_counts table (avoids 178k row scan).
    */
   async getWordsEndingWith(
     suffix: string,
@@ -215,12 +255,30 @@ export class WordDB {
     const offset = Math.max(0, (page - 1) * pageSize);
     const likePattern = `%${clean}`;
 
-    const countRow = await this.db
-      .prepare("SELECT COUNT(*) as cnt FROM words WHERE word LIKE ?")
-      .bind(likePattern)
-      .first<{ cnt: number }>();
+    // 1. Resolve count from static map (0 row reads)
+    let total = STATIC_SUFFIX_COUNTS[clean];
 
-    const total = countRow ? countRow.cnt : 0;
+    // 2. Fallback to word_counts table (1 row read)
+    if (total === undefined) {
+      const countRow = await this.db
+        .prepare("SELECT count FROM word_counts WHERE key = ?")
+        .bind(`suff:${clean}`)
+        .first<{ count: number }>();
+
+      if (countRow) {
+        total = countRow.count;
+      }
+    }
+
+    // 3. Absolute fallback only if entirely unknown suffix
+    if (total === undefined) {
+      const countRow = await this.db
+        .prepare("SELECT COUNT(*) as cnt FROM words WHERE word LIKE ?")
+        .bind(likePattern)
+        .first<{ cnt: number }>();
+      total = countRow ? countRow.cnt : 0;
+    }
+
     const totalPages = Math.ceil(total / pageSize);
 
     const { results } = await this.db

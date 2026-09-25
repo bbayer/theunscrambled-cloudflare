@@ -194,7 +194,7 @@ export const Layout: FC<LayoutProps> = ({
 
           <div class="max-w-6xl mx-auto px-4 mt-8 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
             <p>&copy; {new Date().getFullYear()} The Unscrambled. All rights reserved.</p>
-            <p>Powered by Cloudflare Workers & D1.</p>
+            <p>Fast, accurate anagram & Scrabble word solver.</p>
           </div>
         </footer>
       </body>

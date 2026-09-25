@@ -20,7 +20,7 @@ export const HomeView: FC = () => {
         <section class="text-center py-10 sm:py-16 space-y-6">
           <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            Cloudflare D1 Ultra-Fast Word Engine
+            Ultra-Fast Lexical Word Engine
           </div>
 
           <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-slate-900">
